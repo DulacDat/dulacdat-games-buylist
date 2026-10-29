@@ -124,7 +124,7 @@ $('findCoverBtn').addEventListener('click',async()=>{
  if(!title){$('formStatus').textContent='Enter a game title first.';return;}
  const btn=$('findCoverBtn');btn.disabled=true;btn.textContent='Searching…';$('coverResults').innerHTML='<p class="muted">Looking for cover art…</p>';
  try{
-  const query=encodeURIComponent(title+' '+platform+' video game cover');
+  const query=encodeURIComponent(title+' video game cover');
   const url='https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=10&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*';
   const response=await fetch(url);if(!response.ok)throw new Error('Image search is temporarily unavailable.');
   const json=await response.json();
