@@ -176,7 +176,12 @@ async function loadPublicCatalog(){
   const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
   const db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   supabaseClient=db;
-  const {data,error}=await db.from("games").select("id,title,platform,cib,loose,manual,sealed,cover_url").order("title");
+  let {data,error}=await db.from("games").select("id,title,platform,cib,loose,manual,sealed,cover_url").order("title");
+  // Keep the catalog visible if the optional cover_url database migration has not been run yet.
+  if(error && (error.code==="42703" || error.code==="PGRST204" || /cover_url/i.test(error.message||""))){
+   const fallback=await db.from("games").select("id,title,platform,cib,loose,manual,sealed").order("title");
+   data=fallback.data;error=fallback.error;
+  }
   if(error) throw error;
   games.splice(0,games.length,...(data||[]).map(g=>({id:Number(g.id),title:g.title,platform:g.platform,cover_url:g.cover_url||"",prices:{cib:Number(g.cib),loose:Number(g.loose),manual:Number(g.manual),sealed:Number(g.sealed)}})));
   const platforms=[...new Set(games.map(g=>g.platform))].sort();
