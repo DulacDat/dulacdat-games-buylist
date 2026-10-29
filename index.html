@@ -60,6 +60,10 @@ $("submission").addEventListener("submit",async e=>{
  if(error){$("submitStatus").textContent="We couldn't save your order. Please try again. ("+error.message+")";return;}
  $("orderReference").textContent="Order reference: "+orderReference;
  showInvoice();$("checkoutView").classList.add("hidden");$("success").classList.remove("hidden");window.scrollTo(0,0);
+ $("invoice").insertAdjacentHTML("beforeend",'<p id="emailNotice" class="hint">Sending your order notification…</p>');
+ const {error:emailError}=await supabaseClient.functions.invoke("send-order-notification",{body:{order_reference:orderReference}});
+ const emailNotice=$("emailNotice");
+ if(emailNotice) emailNotice.textContent=emailError?"Your order was saved, but the email notification could not be sent. Your order is still in the admin page.":"A notification was emailed to DulacDat Games Buylist.";
 });$("print").onclick=()=>window.print();$("new").onclick=()=>{cart=[];$("email").value="";$("paypal").value="";$("submitStatus").textContent="";$("success").classList.add("hidden");$("shop").classList.remove("hidden");renderCart();window.scrollTo(0,0)};
 async function loadPublicCatalog(){
  if(!supabaseConfigured){$("catalogStatus").textContent="Catalog connection is not configured yet. Once Supabase is connected, available games and live buy offers will appear here.";renderCatalog();renderCart();return;}
