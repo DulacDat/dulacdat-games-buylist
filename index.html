@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DulacDat Games Buylist</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#647084;--line:#e1e6ee;--green:#126b58;--bg:#f4f6f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#171b2b;color:white;padding:20px max(18px,calc((100% - 1100px)/2));display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:800}.brand small{display:block;color:#c5cbd8;font-size:11px;letter-spacing:.12em}
+main{max-width:1100px;margin:auto;padding:26px 18px}.hero{padding:12px 0 20px}.hero h1{font-size:clamp(30px,5vw,44px);line-height:1.1;margin:0 0 10px;letter-spacing:-1px}.muted,.hint{color:var(--muted)}.toolbar{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}input,select,button,textarea{font:inherit;border-radius:9px;padding:10px 12px;border:1px solid var(--line)}input,select,textarea{background:white;color:var(--ink)}button{cursor:pointer;background:var(--green);border-color:var(--green);color:white;font-weight:700}button.secondary{background:white;color:var(--ink);border-color:var(--line)}.search{flex:1;min-width:220px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}.catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:16px}.card h3{margin:0 0 4px;font-size:17px}.tag{display:inline-block;background:#e6f4ef;color:#126b58;border-radius:99px;padding:3px 8px;font-size:12px;font-weight:700}.cardrow{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}.cardrow select{flex:1;min-width:120px}.cardrow button{padding:10px}.cart{position:sticky;top:12px}.cart h2{margin:0 0 12px}.cartline{padding:12px 0;border-bottom:1px solid var(--line)}.cartline:last-child{border-bottom:0}.cartline strong{display:block}.linecontrols{display:flex;align-items:center;gap:8px;margin-top:7px}.linecontrols input{width:68px}.remove{background:white;color:#a32929;border-color:#f0d3d3;padding:6px 9px}.total{display:flex;justify-content:space-between;gap:10px;font-size:20px;font-weight:800;border-top:1px solid var(--line);padding:15px 0;margin-top:8px}.full{width:100%}.hidden{display:none!important}.section{max-width:720px;margin:10px auto}.field{display:grid;gap:5px;margin:12px 0}.field label{font-weight:700;font-size:14px}.field input{width:100%}.notice{background:#fff7e6;border:1px solid #f0dfb7;color:#775718;padding:12px;border-radius:10px;font-size:13px}.invoice{background:white;padding:24px;border:1px solid var(--line);border-radius:14px}.invoicehead{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:14px}.invoice h2{margin:0}.invoice table{border-collapse:collapse;width:100%;margin-top:14px}.invoice td,.invoice th{text-align:left;padding:10px 6px;border-bottom:1px solid var(--line)}.invoice td:last-child,.invoice th:last-child{text-align:right}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.foot{text-align:center;color:var(--muted);font-size:12px;padding:25px 0}@media(max-width:780px){.layout{grid-template-columns:1fr}.cart{position:static;order:-1}.catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.catalog{grid-template-columns:1fr}.invoice{padding:14px}}@media print{header,.no-print,.foot{display:none!important}body,main{background:white;padding:0}.invoice{border:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">DulacDat Games Buylist<small>VIDEO GAME BUYBACK</small></div><span class="tag">Mail-in game offers</span></header>
+<main>
+<section id="shop">
+<div class="hero"><h1>Turn your games into cash.</h1><p class="muted">Find your games, choose the condition, and build your buylist. Offers are estimates until items are received and inspected.</p></div>
+<div class="toolbar"><input id="search" class="search" placeholder="Search game or console…"><select id="platform"><option value="">All consoles</option><option>PlayStation 5</option><option>PlayStation 4</option><option>PlayStation 3</option><option>Xbox Series X/S</option><option>Xbox One</option><option>Xbox 360</option><option>Nintendo Switch</option><option>Nintendo Wii</option><option>Nintendo DS</option><option>Nintendo 3DS</option></select></div>
+<div class="layout"><div><div id="catalog" class="catalog"></div><p id="empty" class="panel hidden">No games match your search. More titles will be added as the buylist grows.</p></div>
+<aside class="panel cart"><h2>Your buylist (<span id="count">0</span>)</h2><div id="cartLines"><p class="muted">Add a game to get started.</p></div><div class="total"><span>Estimated total</span><span id="total">$0.00</span></div><button class="full" id="checkout">Submit buylist</button><p class="hint" style="font-size:12px">You purchase your own shipping label. Final payout is confirmed after inspection.</p></aside></div>
+</section>
+<section id="checkoutView" class="section panel hidden"><div class="actions"><button class="secondary" id="back">Back to games</button></div><h2>Submit your buylist</h2><p class="muted">Enter your contact email and PayPal email. Never enter your PayPal password.</p>
+<form id="submission" action="https://formsubmit.co/REPLACE_WITH_YOUR_EMAIL" method="POST">
+<input type="hidden" name="_subject" value="New DulacDat Games Buylist submission"><input type="hidden" name="_template" value="table"><input type="hidden" name="_captcha" value="true"><input type="hidden" name="Buylist invoice" id="invoiceField">
+<div class="field"><label for="email">Contact email</label><input id="email" name="Seller contact email" type="email" required placeholder="you@example.com"></div>
+<div class="field"><label for="paypal">PayPal email for payout</label><input id="paypal" name="PayPal email" type="email" required placeholder="you@example.com"></div>
+<div class="notice">Shipping: You are responsible for buying your own shipping label. The receiving address will be provided once the business owner configures it.</div>
+<label style="display:flex;gap:9px;margin:15px 0;align-items:flex-start"><input type="checkbox" required style="margin-top:5px"><span>I understand this is an estimated offer pending inspection.</span></label>
+<div class="total"><span>Estimated payout</span><span id="checkoutTotal">$0.00</span></div>
+<button class="full" type="submit">Email my buylist</button>
+<p class="hint" style="font-size:12px">Submissions are forwarded by the form service to the business email. This static site does not maintain a customer order database.</p>
+</form></section>
+<section id="success" class="section panel hidden"><h2>Buylist submitted</h2><p>Your email form was submitted. Please save or print your invoice for your records.</p><div id="invoice"></div><div class="actions no-print"><button id="print">Print / Save PDF</button><button class="secondary" id="new">Start a new buylist</button></div></section>
+<div class="foot">DulacDat Games Buylist · Estimated offers are subject to inspection.</div>
+</main>
+<script>
+const games=[
+{id:1,title:"Mario Kart 8 Deluxe",platform:"Nintendo Switch",prices:{cib:28,loose:20,manual:24,sealed:38}},
+{id:2,title:"The Legend of Zelda: Breath of the Wild",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:35}},
+{id:3,title:"Super Smash Bros. Ultimate",platform:"Nintendo Switch",prices:{cib:30,loose:22,manual:26,sealed:40}},
+{id:4,title:"Pokémon Sword",platform:"Nintendo Switch",prices:{cib:22,loose:16,manual:19,sealed:32}},
+{id:5,title:"Pokémon Scarlet",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:35}},
+{id:6,title:"Super Mario Odyssey",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:34}},
+{id:7,title:"Animal Crossing: New Horizons",platform:"Nintendo Switch",prices:{cib:28,loose:21,manual:24,sealed:38}},
+{id:8,title:"God of War Ragnarök",platform:"PlayStation 5",prices:{cib:20,loose:15,manual:17,sealed:30}},
+{id:9,title:"Spider-Man: Miles Morales",platform:"PlayStation 5",prices:{cib:14,loose:10,manual:12,sealed:22}},
+{id:10,title:"God of War",platform:"PlayStation 4",prices:{cib:8,loose:5,manual:6,sealed:14}},
+{id:11,title:"Marvel's Spider-Man",platform:"PlayStation 4",prices:{cib:10,loose:7,manual:8,sealed:17}},
+{id:12,title:"The Last of Us Part II",platform:"PlayStation 4",prices:{cib:8,loose:5,manual:6,sealed:14}},
+{id:13,title:"Halo 3",platform:"Xbox 360",prices:{cib:5,loose:3,manual:4,sealed:10}},
+{id:14,title:"Red Dead Redemption 2",platform:"Xbox One",prices:{cib:10,loose:7,manual:8,sealed:16}},
+{id:15,title:"Wii Sports",platform:"Nintendo Wii",prices:{cib:18,loose:12,manual:15,sealed:28}},
+{id:16,title:"Mario Kart Wii",platform:"Nintendo Wii",prices:{cib:20,loose:14,manual:17,sealed:30}},
+{id:17,title:"Pokémon Black",platform:"Nintendo DS",prices:{cib:75,loose:60,manual:68,sealed:120}},
+{id:18,title:"Pokémon X",platform:"Nintendo 3DS",prices:{cib:22,loose:16,manual:19,sealed:35}},
+{id:19,title:"The Last of Us Part I",platform:"PlayStation 5",prices:{cib:22,loose:16,manual:19,sealed:34}},
+{id:20,title:"Elden Ring",platform:"Xbox Series X/S",prices:{cib:18,loose:13,manual:15,sealed:28}}
+];
+const conditionLabels={cib:"CIB (complete in box)",loose:"Loose / game only",manual:"Missing manual",sealed:"Sealed / unopened"};
+let cart=[];
+const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
+function renderCatalog(){let q=$("search").value.toLowerCase(),p=$("platform").value;let list=games.filter(g=>(g.title+" "+g.platform).toLowerCase().includes(q)&&(!p||g.platform===p));$("catalog").innerHTML=list.map(g=>'<article class="card"><span class="tag">'+g.platform+'</span><h3 style="margin-top:9px">'+g.title+'</h3><p class="muted" style="margin:0">Buy offers by condition</p><div class="cardrow"><select id="condition-'+g.id+'" aria-label="Condition for '+g.title+'">'+Object.keys(conditionLabels).map(k=>'<option value="'+k+'">'+conditionLabels[k]+' — '+money(g.prices[k])+'</option>').join("")+'</select><button data-add="'+g.id+'">Add</button></div></article>').join("");$("empty").classList.toggle("hidden",list.length>0);document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{let g=games.find(x=>x.id===Number(b.dataset.add)),condition=$("condition-"+g.id).value,existing=cart.find(x=>x.id===g.id&&x.condition===condition);if(existing)existing.qty++;else cart.push({id:g.id,condition,qty:1});renderCart()})}
+function renderCart(){if(!cart.length)$("cartLines").innerHTML='<p class="muted">Add a game to get started.</p>';else $("cartLines").innerHTML=cart.map((x,i)=>{let g=games.find(y=>y.id===x.id);return '<div class="cartline"><strong>'+g.title+'</strong><span class="hint" style="font-size:12px">'+g.platform+' · '+conditionLabels[x.condition]+' · '+money(g.prices[x.condition])+' each</span><div class="linecontrols"><input type="number" min="1" max="999" value="'+x.qty+'" data-qty="'+i+'" aria-label="Quantity"><strong>'+money(g.prices[x.condition]*x.qty)+'</strong><button class="remove" data-remove="'+i+'">Remove</button></div></div>'}).join("");let count=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+games.find(g=>g.id===x.id).prices[x.condition]*x.qty,0);$("count").textContent=count;$("total").textContent=money(total);document.querySelectorAll("[data-qty]").forEach(i=>i.onchange=()=>{cart[Number(i.dataset.qty)].qty=Math.max(1,Math.min(999,parseInt(i.value)||1));renderCart()});document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{cart.splice(Number(b.dataset.remove),1);renderCart()})}
+function invoiceText(){let lines=cart.map(x=>{let g=games.find(y=>y.id===x.id);return g.title+" | "+g.platform+" | "+conditionLabels[x.condition]+" | Qty "+x.qty+" | "+money(g.prices[x.condition])+" each | Line total "+money(g.prices[x.condition]*x.qty)});return "DULACDAT GAMES BUYLIST\nBatch submitted: "+new Date().toLocaleString()+"\nSeller contact email: "+$("email").value+"\nPayPal email: "+$("paypal").value+"\n\nITEMS\n"+lines.join("\n")+"\n\nESTIMATED TOTAL: "+$("total").textContent+"\n\nShipping is paid by seller. Final payout is confirmed after inspection."}
+function showInvoice(){let rows=cart.map(x=>{let g=games.find(y=>y.id===x.id);return "<tr><td>"+g.title+"<br><small>"+g.platform+" · "+conditionLabels[x.condition]+"</small></td><td>"+x.qty+"</td><td>"+money(g.prices[x.condition]*x.qty)+"</td></tr>"}).join("");$("invoice").innerHTML='<div class="invoice"><div class="invoicehead"><div><h2>DulacDat Games Buylist</h2><div class="muted">BATCH INVOICE / ESTIMATE</div></div><strong>'+new Date().toLocaleString()+'</strong></div><p><b>Seller:</b> '+$("email").value+'<br><b>PayPal:</b> '+$("paypal").value+'</p><table><thead><tr><th>Game / condition</th><th>Qty</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total"><span>Estimated payout</span><span>'+$("total").textContent+'</span></div><p class="muted">You pay your own shipping. The receiving address will be provided by the business owner. Final payout is subject to inspection.</p><p><b>Keep this invoice for your records.</b></p></div>'}
+$("search").oninput=renderCatalog;$("platform").onchange=renderCatalog;$("checkout").onclick=()=>{if(!cart.length){alert("Add at least one game first.");return}$("shop").classList.add("hidden");$("checkoutView").classList.remove("hidden");$("checkoutTotal").textContent=$("total").textContent;window.scrollTo(0,0)};$("back").onclick=()=>{$("checkoutView").classList.add("hidden");$("shop").classList.remove("hidden")};
+$("submission").onsubmit=()=>{$("invoiceField").value=invoiceText()};$("submission").addEventListener("submit",()=>{setTimeout(()=>{showInvoice();$("checkoutView").classList.add("hidden");$("success").classList.remove("hidden");window.scrollTo(0,0)},500)});$("print").onclick=()=>window.print();$("new").onclick=()=>{cart=[];$("email").value="";$("paypal").value="";$("success").classList.add("hidden");$("shop").classList.remove("hidden");renderCart();window.scrollTo(0,0)};
+renderCatalog();renderCart();
+</script>
+</body></html>
