@@ -96,9 +96,18 @@ let supabase, games = [];
 if (configured) {
   $('setupNotice').classList.add('hidden'); $('loginPanel').classList.remove('hidden');
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  supabase.auth.onAuthStateChange((_event, session) => { if (session) enterApp(session); else showLogin(); });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) await enterApp(session);
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) enterApp(session);
+    else showLogin();
+  });
+  // Do not block the rest of the admin script while checking the saved session.
+  // Event handlers must be attached even if the session request is slow or fails.
+  supabase.auth.getSession().then(({ data, error }) => {
+    if (error) $('loginStatus').textContent = 'Session check failed: ' + error.message;
+    if (data && data.session) enterApp(data.session);
+  }).catch(error => {
+    $('loginStatus').textContent = 'Could not check sign-in: ' + error.message;
+  });
 } else {
   $('loginPanel').classList.add('hidden');
 }
