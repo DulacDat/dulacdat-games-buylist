@@ -20,17 +20,17 @@ main{max-width:1100px;margin:auto;padding:26px 18px}.hero{padding:12px 0 20px}.h
 <aside class="panel cart"><h2>Your buylist (<span id="count">0</span>)</h2><div id="cartLines"><p class="muted">Add a game to get started.</p></div><div class="total"><span>Estimated total</span><span id="total">$0.00</span></div><button class="full" id="checkout">Submit buylist</button><p class="hint" style="font-size:12px">You purchase your own shipping label. Final payout is confirmed after inspection.</p></aside></div>
 </section>
 <section id="checkoutView" class="section panel hidden"><div class="actions"><button class="secondary" id="back">Back to games</button></div><h2>Submit your buylist</h2><p class="muted">Enter your contact email and PayPal email. Never enter your PayPal password.</p>
-<form id="submission" action="https://formsubmit.co/dulacdatbusiness@gmail.com" method="POST">
-<input type="hidden" name="_subject" value="New DulacDat Games Buylist submission"><input type="hidden" name="_template" value="table"><input type="hidden" name="_captcha" value="true"><input type="hidden" name="Buylist invoice" id="invoiceField">
+<form id="submission">
 <div class="field"><label for="email">Contact email</label><input id="email" name="Seller contact email" type="email" required placeholder="you@example.com"></div>
 <div class="field"><label for="paypal">PayPal email for payout</label><input id="paypal" name="PayPal email" type="email" required placeholder="you@example.com"></div>
 <div class="notice">You pay for your own shipping label. After submitting, print the invoice and include it in your box. Ship your package to the address shown on the invoice.</div>
 <label style="display:flex;gap:9px;margin:15px 0;align-items:flex-start"><input type="checkbox" required style="margin-top:5px"><span>I understand this is an estimated offer pending inspection.</span></label>
 <div class="total"><span>Estimated payout</span><span id="checkoutTotal">$0.00</span></div>
-<button class="full" type="submit">Email my buylist</button>
-<p class="hint" style="font-size:12px">Submissions are forwarded by the form service to the business email. This static site does not maintain a customer order database.</p>
+<button class="full" id="submitOrder" type="submit">Submit buylist</button>
+<p id="submitStatus" class="hint" style="font-size:13px" role="status"></p>
+<p class="hint" style="font-size:12px">Your buylist is saved to our order system. You will receive an invoice after successful submission.</p>
 </form></section>
-<section id="success" class="section panel hidden"><h2>Buylist submitted</h2><p>Your email form was submitted. Please save or print your invoice for your records.</p><div id="invoice"></div><div class="actions no-print"><button id="print">Print / Save PDF</button><button class="secondary" id="new">Start a new buylist</button></div></section>
+<section id="success" class="section panel hidden"><h2>Buylist submitted</h2><p>Your order has been saved. Please save or print your invoice for your records.</p><p id="orderReference" class="tag"></p><div id="invoice"></div><div class="actions no-print"><button id="print">Print / Save PDF</button><button class="secondary" id="new">Start a new buylist</button></div></section>
 <div class="foot">DulacDat Games Buylist · Estimated offers are subject to inspection.</div>
 </main>
 <script>
@@ -40,18 +40,32 @@ const SUPABASE_ANON_KEY = "sb_publishable_faMrHoxq8KX9loXXGEcH3Q_mKK8OgBV";
 const supabaseConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("ADD_") && SUPABASE_ANON_KEY.length > 30 && !SUPABASE_ANON_KEY.includes("ADD_");
 const conditionLabels={cib:"CIB (complete in box)",loose:"Loose / game only",manual:"Missing manual",sealed:"Sealed / unopened"};
 let cart=[];
+let supabaseClient=null;
 const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
 function renderCatalog(){let q=($("search")?.value||"").toLowerCase(),p=$("platform")?.value||"";let list=games.filter(g=>(g.title+" "+g.platform).toLowerCase().includes(q)&&(!p||g.platform===p));$("catalog").innerHTML=list.map(g=>'<article class="card"><span class="tag">'+g.platform+'</span><h3 style="margin-top:9px">'+g.title+'</h3><p class="muted" style="margin:0">Buy offers by condition</p><div class="cardrow"><select id="condition-'+g.id+'" aria-label="Condition for '+g.title+'">'+Object.keys(conditionLabels).map(k=>'<option value="'+k+'">'+conditionLabels[k]+' — '+money(g.prices[k])+'</option>').join("")+'</select><button data-add="'+g.id+'">Add</button></div></article>').join("");$("empty").classList.toggle("hidden",list.length>0);document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{let g=games.find(x=>x.id===Number(b.dataset.add)),condition=$("condition-"+g.id).value,existing=cart.find(x=>x.id===g.id&&x.condition===condition);if(existing)existing.qty++;else cart.push({id:g.id,condition,qty:1});renderCart()})}
 function renderCart(){if(!cart.length)$("cartLines").innerHTML='<p class="muted">Add a game to get started.</p>';else $("cartLines").innerHTML=cart.map((x,i)=>{let g=games.find(y=>y.id===x.id);return '<div class="cartline"><strong>'+g.title+'</strong><span class="hint" style="font-size:12px">'+g.platform+' · '+conditionLabels[x.condition]+' · '+money(g.prices[x.condition])+' each</span><div class="linecontrols"><input type="number" min="1" max="999" value="'+x.qty+'" data-qty="'+i+'" aria-label="Quantity"><strong>'+money(g.prices[x.condition]*x.qty)+'</strong><button class="remove" data-remove="'+i+'">Remove</button></div></div>'}).join("");let count=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+games.find(g=>g.id===x.id).prices[x.condition]*x.qty,0);$("count").textContent=count;$("total").textContent=money(total);document.querySelectorAll("[data-qty]").forEach(i=>i.onchange=()=>{cart[Number(i.dataset.qty)].qty=Math.max(1,Math.min(999,parseInt(i.value)||1));renderCart()});document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{cart.splice(Number(b.dataset.remove),1);renderCart()})}
 function invoiceText(){let lines=cart.map(x=>{let g=games.find(y=>y.id===x.id);return g.title+" | "+g.platform+" | "+conditionLabels[x.condition]+" | Qty "+x.qty+" | "+money(g.prices[x.condition])+" each | Line total "+money(g.prices[x.condition]*x.qty)});return "DULACDAT GAMES BUYLIST\nBatch submitted: "+new Date().toLocaleString()+"\nSeller contact email: "+$("email").value+"\nPayPal email: "+$("paypal").value+"\n\nITEMS\n"+lines.join("\n")+"\n\nESTIMATED TOTAL: "+$("total").textContent+"\n\nSHIP TO:\nCobe Parfait\nPO Box 6\nDulac, LA 70353\n\nPrint this invoice and include it in your package. Seller pays shipping. Final payout is confirmed after inspection."}
 function showInvoice(){let rows=cart.map(x=>{let g=games.find(y=>y.id===x.id);return "<tr><td>"+g.title+"<br><small>"+g.platform+" · "+conditionLabels[x.condition]+"</small></td><td>"+x.qty+"</td><td>"+money(g.prices[x.condition]*x.qty)+"</td></tr>"}).join("");$("invoice").innerHTML='<div class="invoice"><div class="invoicehead"><div><h2>DulacDat Games Buylist</h2><div class="muted">BATCH INVOICE / ESTIMATE</div></div><strong>'+new Date().toLocaleString()+'</strong></div><p><b>Seller:</b> '+$("email").value+'<br><b>PayPal:</b> '+$("paypal").value+'</p><table><thead><tr><th>Game / condition</th><th>Qty</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total"><span>Estimated payout</span><span>'+$("total").textContent+'</span></div><p class="muted">Ship to:<br><b>Cobe Parfait<br>PO Box 6<br>Dulac, LA 70353</b><br><br>Print this invoice and include it in your box. You pay your own shipping. Final payout is subject to inspection.</p><p><b>Keep this invoice for your records.</b></p></div>'}
 $("search").oninput=renderCatalog;$("platform").onchange=renderCatalog;$("checkout").onclick=()=>{if(!cart.length){alert("Add at least one game first.");return}$("shop").classList.add("hidden");$("checkoutView").classList.remove("hidden");$("checkoutTotal").textContent=$("total").textContent;window.scrollTo(0,0)};$("back").onclick=()=>{$("checkoutView").classList.add("hidden");$("shop").classList.remove("hidden")};
-$("submission").onsubmit=()=>{$("invoiceField").value=invoiceText()};$("submission").addEventListener("submit",()=>{setTimeout(()=>{showInvoice();$("checkoutView").classList.add("hidden");$("success").classList.remove("hidden");window.scrollTo(0,0)},500)});$("print").onclick=()=>window.print();$("new").onclick=()=>{cart=[];$("email").value="";$("paypal").value="";$("success").classList.add("hidden");$("shop").classList.remove("hidden");renderCart();window.scrollTo(0,0)};
+$("submission").addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!cart.length){$("submitStatus").textContent="Please add at least one game.";return;}
+ if(!supabaseClient){$("submitStatus").textContent="The order system is unavailable right now. Please try again later.";return;}
+ const button=$("submitOrder");button.disabled=true;button.textContent="Submitting…";$("submitStatus").textContent="Saving your buylist…";
+ const items=cart.map(x=>{const g=games.find(y=>y.id===x.id);return {game_id:g.id,title:g.title,platform:g.platform,condition:x.condition,condition_label:conditionLabels[x.condition],quantity:x.qty,unit_price:Number(g.prices[x.condition]),line_total:Number((g.prices[x.condition]*x.qty).toFixed(2))};});
+ const estimatedTotal=Number(cart.reduce((sum,x)=>sum+games.find(g=>g.id===x.id).prices[x.condition]*x.qty,0).toFixed(2));
+ const {data,error}=await supabaseClient.from("buylist_orders").insert({seller_email:$("email").value.trim(),paypal_email:$("paypal").value.trim(),items,estimated_total:estimatedTotal,status:"pending"}).select("id").single();
+ button.disabled=false;button.textContent="Submit buylist";
+ if(error){$("submitStatus").textContent="We couldn't save your order. Please try again. ("+error.message+")";return;}
+ $("orderReference").textContent="Order #"+data.id;
+ showInvoice();$("checkoutView").classList.add("hidden");$("success").classList.remove("hidden");window.scrollTo(0,0);
+});$("print").onclick=()=>window.print();$("new").onclick=()=>{cart=[];$("email").value="";$("paypal").value="";$("submitStatus").textContent="";$("success").classList.add("hidden");$("shop").classList.remove("hidden");renderCart();window.scrollTo(0,0)};
 async function loadPublicCatalog(){
  if(!supabaseConfigured){$("catalogStatus").textContent="Catalog connection is not configured yet. Once Supabase is connected, available games and live buy offers will appear here.";renderCatalog();renderCart();return;}
  try{
   const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
   const db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  supabaseClient=db;
   const {data,error}=await db.from("games").select("id,title,platform,cib,loose,manual,sealed").order("title");
   if(error) throw error;
   games.splice(0,games.length,...(data||[]).map(g=>({id:Number(g.id),title:g.title,platform:g.platform,prices:{cib:Number(g.cib),loose:Number(g.loose),manual:Number(g.manual),sealed:Number(g.sealed)}})));
