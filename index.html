@@ -34,7 +34,8 @@ main{max-width:1100px;margin:auto;padding:26px 18px}.hero{padding:12px 0 20px}.h
 <div class="foot">DulacDat Games Buylist · Estimated offers are subject to inspection.</div>
 </main>
 <script>
-const games=[];\nconst SUPABASE_URL = "ADD_SUPABASE_PROJECT_URL";\nconst SUPABASE_ANON_KEY = "ADD_SUPABASE_ANON_OR_PUBLISHABLE_KEY";\nconst supabaseConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("ADD_") && SUPABASE_ANON_KEY.length > 30 && !SUPABASE_ANON_KEY.includes("ADD_");
+const games=[];
+const SUPABASE_URL = "ADD_SUPABASE_PROJECT_URL";\nconst SUPABASE_ANON_KEY = "ADD_SUPABASE_ANON_OR_PUBLISHABLE_KEY";\nconst supabaseConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("ADD_") && SUPABASE_ANON_KEY.length > 30 && !SUPABASE_ANON_KEY.includes("ADD_");
 const conditionLabels={cib:"CIB (complete in box)",loose:"Loose / game only",manual:"Missing manual",sealed:"Sealed / unopened"};
 let cart=[];
 const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
@@ -44,6 +45,20 @@ function invoiceText(){let lines=cart.map(x=>{let g=games.find(y=>y.id===x.id);r
 function showInvoice(){let rows=cart.map(x=>{let g=games.find(y=>y.id===x.id);return "<tr><td>"+g.title+"<br><small>"+g.platform+" · "+conditionLabels[x.condition]+"</small></td><td>"+x.qty+"</td><td>"+money(g.prices[x.condition]*x.qty)+"</td></tr>"}).join("");$("invoice").innerHTML='<div class="invoice"><div class="invoicehead"><div><h2>DulacDat Games Buylist</h2><div class="muted">BATCH INVOICE / ESTIMATE</div></div><strong>'+new Date().toLocaleString()+'</strong></div><p><b>Seller:</b> '+$("email").value+'<br><b>PayPal:</b> '+$("paypal").value+'</p><table><thead><tr><th>Game / condition</th><th>Qty</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total"><span>Estimated payout</span><span>'+$("total").textContent+'</span></div><p class="muted">Ship to:<br><b>Cobe Parfait<br>PO Box 6<br>Dulac, LA 70353</b><br><br>Print this invoice and include it in your box. You pay your own shipping. Final payout is subject to inspection.</p><p><b>Keep this invoice for your records.</b></p></div>'}
 $("search").oninput=renderCatalog;$("platform").onchange=renderCatalog;$("checkout").onclick=()=>{if(!cart.length){alert("Add at least one game first.");return}$("shop").classList.add("hidden");$("checkoutView").classList.remove("hidden");$("checkoutTotal").textContent=$("total").textContent;window.scrollTo(0,0)};$("back").onclick=()=>{$("checkoutView").classList.add("hidden");$("shop").classList.remove("hidden")};
 $("submission").onsubmit=()=>{$("invoiceField").value=invoiceText()};$("submission").addEventListener("submit",()=>{setTimeout(()=>{showInvoice();$("checkoutView").classList.add("hidden");$("success").classList.remove("hidden");window.scrollTo(0,0)},500)});$("print").onclick=()=>window.print();$("new").onclick=()=>{cart=[];$("email").value="";$("paypal").value="";$("success").classList.add("hidden");$("shop").classList.remove("hidden");renderCart();window.scrollTo(0,0)};
-renderCatalog();renderCart();
+async function loadPublicCatalog(){
+ if(!supabaseConfigured){$("catalogStatus").textContent="Catalog connection is not configured yet. Once Supabase is connected, available games and live buy offers will appear here.";renderCatalog();renderCart();return;}
+ try{
+  const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+  const db=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  const {data,error}=await db.from("games").select("id,title,platform,cib,loose,manual,sealed").order("title");
+  if(error) throw error;
+  games.splice(0,games.length,...(data||[]).map(g=>({id:Number(g.id),title:g.title,platform:g.platform,prices:{cib:Number(g.cib),loose:Number(g.loose),manual:Number(g.manual),sealed:Number(g.sealed)}})));
+  const platforms=[...new Set(games.map(g=>g.platform))].sort();
+  $("platform").innerHTML='<option value="">All consoles</option>'+platforms.map(p=>'<option value="'+p.replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'">'+p.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</option>').join("");
+  $("catalogStatus").textContent=games.length?games.length+" games currently listed. Offers are estimates until inspection.":"No games are listed yet. Check back soon.";
+  renderCatalog();renderCart();
+ }catch(e){$("catalogStatus").textContent="Could not load the game catalog. Please try again later.";renderCatalog();renderCart();console.error(e);}
+}
+loadPublicCatalog();
 </script>
 </body></html>
