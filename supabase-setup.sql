@@ -72,6 +72,12 @@ create table if not exists public.buylist_orders (
   created_at timestamptz not null default now()
 );
 
+-- Safe upgrade for projects that created the orders table before order references were added.
+alter table public.buylist_orders add column if not exists order_reference text;
+update public.buylist_orders set order_reference = 'DD-LEGACY-' || id::text where order_reference is null;
+alter table public.buylist_orders alter column order_reference set not null;
+create unique index if not exists buylist_orders_order_reference_uidx on public.buylist_orders(order_reference);
+
 alter table public.buylist_orders enable row level security;
 
 drop policy if exists "Customers can submit buylist orders" on public.buylist_orders;
