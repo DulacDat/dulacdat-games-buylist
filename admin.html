@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buylist Admin · DulacDat Games</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#647084;--line:#e1e6ee;--green:#126b58;--bg:#f4f6f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#171b2b;color:#fff;padding:20px max(18px,calc((100% - 1000px)/2));display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px}.brand small{display:block;color:#c5cbd8;font-size:11px;letter-spacing:.12em}
+main{max-width:1000px;margin:auto;padding:26px 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 16px}
+h1{font-size:32px;margin:0 0 6px}h2{margin:0 0 14px;font-size:21px}.muted{color:var(--muted)}.field{display:grid;gap:5px;margin:12px 0}.field label{font-weight:700;font-size:14px}
+input,select,button{font:inherit;border-radius:9px;padding:10px 12px;border:1px solid var(--line)}input,select{background:#fff;color:var(--ink);width:100%}button{cursor:pointer;background:var(--green);border-color:var(--green);color:#fff;font-weight:700}button.secondary{background:#fff;color:var(--ink);border-color:var(--line)}button.danger{background:#fff;color:#a32929;border-color:#f0d3d3}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.prices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.notice{background:#fff7e6;border:1px solid #f0dfb7;color:#775718;padding:12px;border-radius:10px;margin:12px 0}.status{margin-top:10px;white-space:pre-wrap}.game{padding:14px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}.game:last-child{border-bottom:0}.game strong{display:block}.tag{display:inline-block;background:#e6f4ef;color:#126b58;border-radius:99px;padding:3px 8px;font-size:12px;font-weight:700}
+@media(max-width:650px){.grid,.prices{grid-template-columns:1fr 1fr}.game{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="brand">DulacDat Games Buylist<small>PRIVATE ADMIN</small></div><a href="./" style="color:#fff">View public site ↗</a></header>
+<main>
+<div style="margin-bottom:18px"><h1>Game catalog manager</h1><p class="muted">Add games and update your buy offers by condition. Changes will feed the public buylist after the site is connected to your Supabase project.</p></div>
+<section id="setupNotice" class="panel"><h2>One-time setup still needed</h2><p>This admin page has been added to the site, but it needs your Supabase project URL and public anon/publishable key before it can connect. Those are project connection details, not your account password or service-role secret.</p><p class="muted">Next: create a Supabase project, run the repository's <code>supabase-setup.sql</code> in SQL Editor, then provide the Project URL and anon/publishable key so the site can be connected. Create your admin user with <b>dulacdatbusiness@gmail.com</b> in Supabase Authentication; public sign-up will not be offered here.</p></section>
+<section id="loginPanel" class="panel hidden"><h2>Admin sign in</h2><div class="field"><label for="loginEmail">Admin email</label><input id="loginEmail" type="email" autocomplete="username" value="dulacdatbusiness@gmail.com"></div><div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div><button id="loginBtn">Sign in</button><p id="loginStatus" class="status muted" role="status"></p></section>
+<section id="appPanel" class="hidden">
+<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Add or edit a game</h2><button id="signOutBtn" class="secondary">Sign out</button></div>
+<form id="gameForm">
+<input id="gameId" type="hidden">
+<div class="grid"><div class="field"><label for="title">Game title</label><input id="title" required maxlength="120" placeholder="Example: Super Mario Odyssey"></div><div class="field"><label for="platform">Console / platform</label><input id="platform" required maxlength="80" placeholder="Example: Nintendo Switch"></div></div>
+<p style="font-weight:700;margin-bottom:6px">Buy offer by condition (USD)</p><div class="prices">
+<div class="field"><label for="cib">CIB</label><input id="cib" type="number" min="0" max="99999" step=".01" required value="0"></div>
+<div class="field"><label for="loose">Loose / game only</label><input id="loose" type="number" min="0" max="99999" step=".01" required value="0"></div>
+<div class="field"><label for="manual">Missing manual</label><input id="manual" type="number" min="0" max="99999" step=".01" required value="0"></div>
+<div class="field"><label for="sealed">Sealed / unopened</label><input id="sealed" type="number" min="0" max="99999" step=".01" required value="0"></div>
+</div><div class="actions"><button type="submit" id="saveBtn">Save game</button><button type="button" id="clearBtn" class="secondary">Clear form</button></div><p id="formStatus" class="status muted" role="status"></p>
+</form></div>
+<div class="panel"><h2>Current catalog <span id="gameCount" class="tag">0 games</span></h2><div class="field"><label for="filter">Search games</label><input id="filter" placeholder="Search title or console"></div><div id="gameList"><p class="muted">Loading catalog…</p></div></div>
+</section>
+</main>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const SUPABASE_URL = 'ADD_SUPABASE_PROJECT_URL';
+const SUPABASE_ANON_KEY = 'ADD_SUPABASE_ANON_OR_PUBLISHABLE_KEY';
+const ADMIN_EMAIL = 'dulacdatbusiness@gmail.com';
+const $ = id => document.getElementById(id);
+const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('ADD_') && SUPABASE_ANON_KEY.length > 30 && !SUPABASE_ANON_KEY.includes('ADD_');
+let supabase, games = [];
+if (configured) {
+  $('setupNotice').classList.add('hidden'); $('loginPanel').classList.remove('hidden');
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabase.auth.onAuthStateChange((_event, session) => { if (session) enterApp(session); else showLogin(); });
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) await enterApp(session);
+} else {
+  $('loginPanel').classList.add('hidden');
+}
+function showLogin(){ $('appPanel').classList.add('hidden'); if(configured) $('loginPanel').classList.remove('hidden'); }
+async function enterApp(session){
+  if ((session.user.email || '').toLowerCase() !== ADMIN_EMAIL) {
+    await supabase.auth.signOut(); $('loginStatus').textContent = 'This account is not authorized for the admin page.'; return;
+  }
+  $('loginPanel').classList.add('hidden'); $('appPanel').classList.remove('hidden'); await loadGames();
+}
+$('loginBtn').addEventListener('click', async () => {
+  $('loginStatus').textContent = 'Signing in…';
+  const { error } = await supabase.auth.signInWithPassword({ email: $('loginEmail').value.trim(), password: $('loginPassword').value });
+  $('loginStatus').textContent = error ? error.message : 'Signed in.';
+});
+$('signOutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); });
+function clearForm(){ $('gameForm').reset(); $('gameId').value=''; ['cib','loose','manual','sealed'].forEach(id=>$(id).value='0'); $('saveBtn').textContent='Save game'; $('formStatus').textContent=''; }
+$('clearBtn').addEventListener('click', clearForm);
+$('gameForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('formStatus').textContent='Saving…';
+  const row = { title:$('title').value.trim(), platform:$('platform').value.trim(), cib:Number($('cib').value), loose:Number($('loose').value), manual:Number($('manual').value), sealed:Number($('sealed').value) };
+  const id = $('gameId').value;
+  const result = id ? await supabase.from('games').update(row).eq('id', Number(id)).select().single() : await supabase.from('games').insert(row).select().single();
+  if(result.error){ $('formStatus').textContent='Could not save: '+result.error.message; return; }
+  $('formStatus').textContent='Saved. The catalog is updated.'; clearForm(); await loadGames();
+});
+async function loadGames(){
+  $('gameList').innerHTML='<p class="muted">Loading catalog…</p>';
+  const { data, error } = await supabase.from('games').select('*').order('title');
+  if(error){ $('gameList').innerHTML='<p class="notice">Could not load games: '+escapeHtml(error.message)+'</p>'; return; }
+  games=data||[]; $('gameCount').textContent=games.length+' games'; renderGames();
+}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderGames(){
+  const q=$('filter').value.trim().toLowerCase();
+  const list=games.filter(g=>(g.title+' '+g.platform).toLowerCase().includes(q));
+  $('gameList').innerHTML=list.length?list.map(g=>'<div class="game"><div><strong>'+escapeHtml(g.title)+'</strong><span class="muted">'+escapeHtml(g.platform)+' · CIB $'+Number(g.cib).toFixed(2)+' · Loose $'+Number(g.loose).toFixed(2)+' · Missing manual $'+Number(g.manual).toFixed(2)+' · Sealed $'+Number(g.sealed).toFixed(2)+'</span></div><div class="actions" style="margin:0"><button class="secondary" data-edit="'+g.id+'">Edit</button><button class="danger" data-delete="'+g.id+'">Delete</button></div></div>').join(''):'<p class="muted">No games yet. Add your first title above.</p>';
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const g=games.find(x=>x.id===Number(b.dataset.edit));$('gameId').value=g.id;$('title').value=g.title;$('platform').value=g.platform;['cib','loose','manual','sealed'].forEach(k=>$(k).value=g[k]);$('saveBtn').textContent='Update game';$('formStatus').textContent='Editing '+g.title;window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{const g=games.find(x=>x.id===Number(b.dataset.delete));if(!confirm('Delete '+g.title+' from the catalog?'))return;const {error}=await supabase.from('games').delete().eq('id',g.id);if(error)alert('Could not delete: '+error.message);else await loadGames();});
+}
+$('filter').addEventListener('input',renderGames);
+</script>
+</body></html>
