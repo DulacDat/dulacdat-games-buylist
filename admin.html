@@ -78,7 +78,9 @@ button:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
 <div class="field"><label for="loose">Loose / game only</label><input id="loose" type="number" min="0" max="99999" step=".01" required value="0"></div>
 <div class="field"><label for="manual">Missing manual</label><input id="manual" type="number" min="0" max="99999" step=".01" required value="0"></div>
 <div class="field"><label for="sealed">Sealed / unopened</label><input id="sealed" type="number" min="0" max="99999" step=".01" required value="0"></div>
-</div><div class="actions"><button type="submit" id="saveBtn">Save game</button><button type="button" id="clearBtn" class="secondary">Clear form</button></div><p id="formStatus" class="status muted" role="status"></p>
+</div>
+<div class="field"><label>Game cover image</label><div class="actions" style="margin:0"><button type="button" id="findCoverBtn" class="secondary">Find cover art automatically</button><button type="button" id="clearCoverBtn" class="secondary">Remove image</button></div><p class="muted" style="font-size:13px;margin:4px 0">Searches Wikipedia's public image results using the game title and platform. Choose the correct cover below.</p><input id="coverUrl" type="hidden"><div id="coverPreview" style="margin-top:10px"></div><div id="coverResults" class="grid" style="margin-top:10px"></div></div>
+<div class="actions"><button type="submit" id="saveBtn">Save game</button><button type="button" id="clearBtn" class="secondary">Clear form</button></div><p id="formStatus" class="status muted" role="status"></p>
 </form></div>
 <div class="panel"><h2>Current catalog <span id="gameCount" class="tag">0 games</span></h2><div class="field"><label for="filter">Search games</label><input id="filter" placeholder="Search title or console"></div><div id="gameList"><p class="muted">Loading catalog…</p></div></div>
 <div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Customer orders</h2><button type="button" class="secondary" id="refreshOrdersBtn">Refresh orders</button></div><p class="muted">New customer submissions appear here. Update the status as each order moves through the process.</p><div id="orderList"><p class="muted">Loading orders…</p></div></div>
@@ -114,11 +116,28 @@ $('loginBtn').addEventListener('click', async () => {
   $('loginStatus').textContent = error ? error.message : 'Signed in.';
 });
 $('signOutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); });
-function clearForm(){ $('gameForm').reset(); $('gameId').value=''; ['cib','loose','manual','sealed'].forEach(id=>$(id).value='0'); $('saveBtn').textContent='Save game'; $('formStatus').textContent=''; }
+function clearForm(){ $('gameForm').reset(); $('gameId').value=''; $('coverUrl').value=''; $('coverPreview').innerHTML=''; $('coverResults').innerHTML=''; ['cib','loose','manual','sealed'].forEach(id=>$(id).value='0'); $('saveBtn').textContent='Save game'; $('formStatus').textContent=''; }
+function showCover(url,title){ $('coverUrl').value=url||''; $('coverPreview').innerHTML=url?'<img src="'+escapeHtml(url)+'" alt="Selected cover art" style="width:110px;height:145px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#f5f7fa;padding:5px"><p class="muted" style="font-size:12px">Selected cover image</p>':'<p class="muted">No cover selected.</p>'; }
+$('clearCoverBtn').addEventListener('click',()=>{showCover('');$('coverResults').innerHTML='';});
+$('findCoverBtn').addEventListener('click',async()=>{
+ const title=$('title').value.trim(),platform=$('platform').value.trim();
+ if(!title){$('formStatus').textContent='Enter a game title first.';return;}
+ const btn=$('findCoverBtn');btn.disabled=true;btn.textContent='Searching…';$('coverResults').innerHTML='<p class="muted">Looking for cover art…</p>';
+ try{
+  const query=encodeURIComponent(title+' '+platform+' video game cover');
+  const url='https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+query+'&gsrnamespace=0&gsrlimit=10&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*';
+  const response=await fetch(url);if(!response.ok)throw new Error('Image search is temporarily unavailable.');
+  const json=await response.json();
+  const results=Object.values(json.query?.pages||{}).filter(p=>p.thumbnail?.source);
+  $('coverResults').innerHTML=results.length?results.map((p,i)=>'<button type="button" class="secondary" data-cover-choice="'+i+'" style="display:flex;align-items:center;gap:10px;text-align:left;height:auto;min-height:120px"><img src="'+escapeHtml(p.thumbnail.source)+'" alt="" style="width:64px;height:88px;object-fit:contain;background:#f5f7fa;border-radius:6px"><span><b>'+escapeHtml(p.title)+'</b><br><small>Use this image</small></span></button>').join(''):'<p class="muted">No suitable cover images found. Try a more specific title, or leave the image blank.</p>';
+  results.forEach((p,i)=>{const button=document.querySelector('[data-cover-choice="'+i+'"]');button?.addEventListener('click',()=>{showCover(p.thumbnail.source,p.title);$('coverResults').innerHTML='<p class="tag">Cover selected: '+escapeHtml(p.title)+'</p>';});});
+ }catch(err){$('coverResults').innerHTML='<p class="notice">'+escapeHtml(err.message)+'</p>';}
+ finally{btn.disabled=false;btn.textContent='Find cover art automatically';}
+});
 $('clearBtn').addEventListener('click', clearForm);
 $('gameForm').addEventListener('submit', async e => {
   e.preventDefault(); $('formStatus').textContent='Saving…';
-  const row = { title:$('title').value.trim(), platform:$('platform').value.trim(), cib:Number($('cib').value), loose:Number($('loose').value), manual:Number($('manual').value), sealed:Number($('sealed').value) };
+  const row = { title:$('title').value.trim(), platform:$('platform').value.trim(), cib:Number($('cib').value), loose:Number($('loose').value), manual:Number($('manual').value), sealed:Number($('sealed').value), cover_url:$('coverUrl').value.trim() || null };
   const id = $('gameId').value;
   // Prevent accidental duplicate entries for the same game on the same platform.
   const normalize = value => String(value || '').trim().toLocaleLowerCase();
@@ -151,8 +170,8 @@ function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function renderGames(){
   const q=$('filter').value.trim().toLowerCase();
   const list=games.filter(g=>(g.title+' '+g.platform).toLowerCase().includes(q));
-  $('gameList').innerHTML=list.length?list.map(g=>'<div class="game"><div><strong>'+escapeHtml(g.title)+'</strong><span class="muted">'+escapeHtml(g.platform)+' · CIB $'+Number(g.cib).toFixed(2)+' · Loose $'+Number(g.loose).toFixed(2)+' · Missing manual $'+Number(g.manual).toFixed(2)+' · Sealed $'+Number(g.sealed).toFixed(2)+'</span></div><div class="actions" style="margin:0"><button class="secondary" data-edit="'+g.id+'">Edit</button><button class="danger" data-delete="'+g.id+'">Delete</button></div></div>').join(''):'<p class="muted">No games yet. Add your first title above.</p>';
-  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const g=games.find(x=>x.id===Number(b.dataset.edit));$('gameId').value=g.id;$('title').value=g.title;$('platform').value=g.platform;['cib','loose','manual','sealed'].forEach(k=>$(k).value=g[k]);$('saveBtn').textContent='Update game';$('formStatus').textContent='Editing '+g.title;window.scrollTo({top:0,behavior:'smooth'});});
+  $('gameList').innerHTML=list.length?list.map(g=>'<div class="game"><div style="display:flex;gap:12px;align-items:center">'+(g.cover_url?'<img src="'+escapeHtml(g.cover_url)+'" alt="" style="width:48px;height:64px;object-fit:contain;border-radius:7px;background:#f5f7fa">':'')+'<div><strong>'+escapeHtml(g.title)+'</strong><span class="muted">'+escapeHtml(g.platform)+' · CIB $'+Number(g.cib).toFixed(2)+' · Loose $'+Number(g.loose).toFixed(2)+' · Missing manual $'+Number(g.manual).toFixed(2)+' · Sealed $'+Number(g.sealed).toFixed(2)+'</span></div></div><div class="actions" style="margin:0"><button class="secondary" data-edit="'+g.id+'">Edit</button><button class="danger" data-delete="'+g.id+'">Delete</button></div></div>').join(''):'<p class="muted">No games yet. Add your first title above.</p>';
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const g=games.find(x=>x.id===Number(b.dataset.edit));$('gameId').value=g.id;$('title').value=g.title;$('platform').value=g.platform;['cib','loose','manual','sealed'].forEach(k=>$(k).value=g[k]);showCover(g.cover_url||'');$('coverResults').innerHTML='';$('saveBtn').textContent='Update game';$('formStatus').textContent='Editing '+g.title;window.scrollTo({top:0,behavior:'smooth'});});
   document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{const g=games.find(x=>x.id===Number(b.dataset.delete));if(!confirm('Delete '+g.title+' from the catalog?'))return;const {error}=await supabase.from('games').delete().eq('id',g.id);if(error)alert('Could not delete: '+error.message);else await loadGames();});
 }
 
