@@ -11,9 +11,13 @@ create table if not exists public.games (
   loose numeric(10,2) not null default 0 check (loose >= 0),
   manual numeric(10,2) not null default 0 check (manual >= 0),
   sealed numeric(10,2) not null default 0 check (sealed >= 0),
+  cover_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Safe upgrade for an existing project that already has the games table.
+alter table public.games add column if not exists cover_url text;
 
 alter table public.games enable row level security;
 
