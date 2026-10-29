@@ -40,6 +40,26 @@ button.danger{box-shadow:none}
 @media(max-width:650px){main{padding:24px 15px 40px}.panel{padding:18px;border-radius:16px}.grid,.prices{grid-template-columns:1fr}.game{padding:16px 0}.orderhead{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
+
+/* Final polish: consistent, clean storefront and admin styling */
+:root{--brand:#087f68;--brand-dark:#075f50;--ink:#152238;--muted:#66758a;--line:#e5eaf0;--surface:#fff;--page:#f4f7fa}
+body{background:var(--page);color:var(--ink)}
+header{min-height:76px;background:#101b2d;border-bottom:3px solid var(--brand);box-shadow:0 5px 22px #101b2d18}
+.brand{color:#fff;font-weight:800}
+main{padding-top:34px}
+.panel,.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 5px 18px rgba(16,27,45,.045)}
+.card{border-radius:15px;padding:19px}
+.card:hover{border-color:#a8d7c9;box-shadow:0 10px 24px rgba(16,27,45,.08)}
+.toolbar input,.toolbar select{background:#fff}
+.toolbar select{min-width:170px}
+button{background:var(--brand);border-color:var(--brand)}
+button:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+.tag{letter-spacing:.01em}
+.notice{line-height:1.6}
+:focus-visible{outline:3px solid #39a98d;outline-offset:2px}
+@media(min-width:900px){.catalog{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
+@media(max-width:600px){header{padding:16px}.brand{font-size:19px}main{padding-top:22px}.toolbar select{width:100%}}
+
 </style>
 </head>
 <body>
