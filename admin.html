@@ -34,6 +34,7 @@ input,select,button{font:inherit;border-radius:9px;padding:10px 12px;border:1px 
 </div><div class="actions"><button type="submit" id="saveBtn">Save game</button><button type="button" id="clearBtn" class="secondary">Clear form</button></div><p id="formStatus" class="status muted" role="status"></p>
 </form></div>
 <div class="panel"><h2>Current catalog <span id="gameCount" class="tag">0 games</span></h2><div class="field"><label for="filter">Search games</label><input id="filter" placeholder="Search title or console"></div><div id="gameList"><p class="muted">Loading catalog…</p></div></div>
+<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Customer orders</h2><button type="button" class="secondary" id="refreshOrdersBtn">Refresh orders</button></div><p class="muted">New customer submissions appear here. Update the status as each order moves through the process.</p><div id="orderList"><p class="muted">Loading orders…</p></div></div>
 </section>
 </main>
 <script type="module">
@@ -58,7 +59,7 @@ async function enterApp(session){
   if ((session.user.email || '').toLowerCase() !== ADMIN_EMAIL) {
     await supabase.auth.signOut(); $('loginStatus').textContent = 'This account is not authorized for the admin page.'; return;
   }
-  $('loginPanel').classList.add('hidden'); $('appPanel').classList.remove('hidden'); await loadGames();
+  $('loginPanel').classList.add('hidden'); $('appPanel').classList.remove('hidden'); await loadGames(); await loadOrders();
 }
 $('loginBtn').addEventListener('click', async () => {
   $('loginStatus').textContent = 'Signing in…';
@@ -90,6 +91,26 @@ function renderGames(){
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const g=games.find(x=>x.id===Number(b.dataset.edit));$('gameId').value=g.id;$('title').value=g.title;$('platform').value=g.platform;['cib','loose','manual','sealed'].forEach(k=>$(k).value=g[k]);$('saveBtn').textContent='Update game';$('formStatus').textContent='Editing '+g.title;window.scrollTo({top:0,behavior:'smooth'});});
   document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{const g=games.find(x=>x.id===Number(b.dataset.delete));if(!confirm('Delete '+g.title+' from the catalog?'))return;const {error}=await supabase.from('games').delete().eq('id',g.id);if(error)alert('Could not delete: '+error.message);else await loadGames();});
 }
+
+async function loadOrders(){
+  $('orderList').innerHTML='<p class="muted">Loading orders…</p>';
+  const {data,error}=await supabase.from('buylist_orders').select('*').order('created_at',{ascending:false});
+  if(error){$('orderList').innerHTML='<p class="notice">Could not load orders: '+escapeHtml(error.message)+'. Make sure you ran the updated setup SQL in Supabase.</p>';return;}
+  if(!data||!data.length){$('orderList').innerHTML='<p class="muted">No customer orders yet.</p>';return;}
+  $('orderList').innerHTML=data.map(o=>{
+    const items=Array.isArray(o.items)?o.items:[];
+    const itemHtml=items.map(i=>'<li>'+escapeHtml(i.title)+' ('+escapeHtml(i.platform)+') · '+escapeHtml(i.condition_label||i.condition)+' · Qty '+Number(i.quantity||0)+' · '+money(i.line_total)+'</li>').join('');
+    return '<article class="order"><div class="orderhead"><div><strong>Order '+escapeHtml(o.order_reference||o.id)+'</strong><div class="muted">'+new Date(o.created_at).toLocaleString()+'</div></div><strong>'+money(o.estimated_total)+'</strong></div><p><b>Contact:</b> '+escapeHtml(o.seller_email)+'<br><b>PayPal:</b> '+escapeHtml(o.paypal_email)+'</p><b>Items</b><ul class="orderitems">'+itemHtml+'</ul><div class="actions"><label style="display:flex;align-items:center;gap:8px">Status <select data-order-status="'+o.id+'" style="width:auto"><option value="pending">Pending</option><option value="received">Received</option><option value="inspected">Inspected</option><option value="paid">Paid</option><option value="cancelled">Cancelled</option></select></label><button type="button" data-save-order="'+o.id+'">Save status</button><span class="muted" id="order-status-'+o.id+'"></span></div></article>';
+  }).join('');
+  data.forEach(o=>{const select=document.querySelector('[data-order-status="'+o.id+'"]');if(select)select.value=o.status;});
+  document.querySelectorAll('[data-save-order]').forEach(b=>b.onclick=async()=>{
+    const id=Number(b.dataset.saveOrder),select=document.querySelector('[data-order-status="'+id+'"]'),status=$('order-status-'+id);
+    b.disabled=true;status.textContent='Saving…';
+    const {error}=await supabase.from('buylist_orders').update({status:select.value}).eq('id',id);
+    b.disabled=false;status.textContent=error?'Could not save: '+error.message:'Saved.';
+  });
+}
+$('refreshOrdersBtn').addEventListener('click',loadOrders);
 $('filter').addEventListener('input',renderGames);
 </script>
 </body></html>
