@@ -15,8 +15,7 @@ main{max-width:1100px;margin:auto;padding:26px 18px}.hero{padding:12px 0 20px}.h
 <header><div class="brand">DulacDat Games Buylist<small>VIDEO GAME BUYBACK</small></div><span class="tag">Mail-in game offers</span></header>
 <main>
 <section id="shop">
-<div class="hero"><h1>Turn your games into cash.</h1><p class="muted">Find your games, choose the condition, and build your buylist. Offers are estimates until items are received and inspected.</p></div>
-<div class="toolbar"><input id="search" class="search" placeholder="Search game or console…"><select id="platform"><option value="">All consoles</option><option>PlayStation 5</option><option>PlayStation 4</option><option>PlayStation 3</option><option>Xbox Series X/S</option><option>Xbox One</option><option>Xbox 360</option><option>Nintendo Switch</option><option>Nintendo Wii</option><option>Nintendo DS</option><option>Nintendo 3DS</option></select></div>
+<div class="hero"><h1>Turn your games into cash.</h1><p class="muted">Build your game buylist and mail it in. Offers are estimates until items are received and inspected.</p></div><section class="panel" style="margin-bottom:18px"><h2 style="margin-top:0">How it works</h2><ol style="padding-left:22px;margin-bottom:0"><li><b>Build your buylist.</b> Select each game, choose its condition, and enter the quantity.</li><li><b>Submit your details.</b> Enter your contact email and PayPal email.</li><li><b>Print your invoice.</b> After submitting, the invoice will show your item list and the ship-to address. The same invoice details will be emailed to DulacDat Games Buylist.</li><li><b>Pack and ship.</b> Put your games in a secure box and include a printed copy of the invoice. You buy your own shipping label and send the box to the address printed on the invoice.</li><li><b>Inspection and payout.</b> Games are checked on arrival. Final payout is confirmed after inspection and may change if the items or conditions differ from your submission.</li></ol><hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><h3 style="margin-bottom:6px">Condition guidelines</h3><p style="margin-top:0">Games should be in approximately <b>9/10 condition</b> and free of major damage. Normal light wear is okay. Disc resurfacing is acceptable as long as the disc is repairable and plays properly. Please do not list cracked, badly damaged, or unplayable items as standard-condition games.</p></section>
 <div class="layout"><div><div id="catalog" class="catalog"></div><p id="empty" class="panel hidden">No games match your search. More titles will be added as the buylist grows.</p></div>
 <aside class="panel cart"><h2>Your buylist (<span id="count">0</span>)</h2><div id="cartLines"><p class="muted">Add a game to get started.</p></div><div class="total"><span>Estimated total</span><span id="total">$0.00</span></div><button class="full" id="checkout">Submit buylist</button><p class="hint" style="font-size:12px">You purchase your own shipping label. Final payout is confirmed after inspection.</p></aside></div>
 </section>
@@ -35,28 +34,7 @@ main{max-width:1100px;margin:auto;padding:26px 18px}.hero{padding:12px 0 20px}.h
 <div class="foot">DulacDat Games Buylist · Estimated offers are subject to inspection.</div>
 </main>
 <script>
-const games=[
-{id:1,title:"Mario Kart 8 Deluxe",platform:"Nintendo Switch",prices:{cib:28,loose:20,manual:24,sealed:38}},
-{id:2,title:"The Legend of Zelda: Breath of the Wild",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:35}},
-{id:3,title:"Super Smash Bros. Ultimate",platform:"Nintendo Switch",prices:{cib:30,loose:22,manual:26,sealed:40}},
-{id:4,title:"Pokémon Sword",platform:"Nintendo Switch",prices:{cib:22,loose:16,manual:19,sealed:32}},
-{id:5,title:"Pokémon Scarlet",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:35}},
-{id:6,title:"Super Mario Odyssey",platform:"Nintendo Switch",prices:{cib:25,loose:18,manual:21,sealed:34}},
-{id:7,title:"Animal Crossing: New Horizons",platform:"Nintendo Switch",prices:{cib:28,loose:21,manual:24,sealed:38}},
-{id:8,title:"God of War Ragnarök",platform:"PlayStation 5",prices:{cib:20,loose:15,manual:17,sealed:30}},
-{id:9,title:"Spider-Man: Miles Morales",platform:"PlayStation 5",prices:{cib:14,loose:10,manual:12,sealed:22}},
-{id:10,title:"God of War",platform:"PlayStation 4",prices:{cib:8,loose:5,manual:6,sealed:14}},
-{id:11,title:"Marvel's Spider-Man",platform:"PlayStation 4",prices:{cib:10,loose:7,manual:8,sealed:17}},
-{id:12,title:"The Last of Us Part II",platform:"PlayStation 4",prices:{cib:8,loose:5,manual:6,sealed:14}},
-{id:13,title:"Halo 3",platform:"Xbox 360",prices:{cib:5,loose:3,manual:4,sealed:10}},
-{id:14,title:"Red Dead Redemption 2",platform:"Xbox One",prices:{cib:10,loose:7,manual:8,sealed:16}},
-{id:15,title:"Wii Sports",platform:"Nintendo Wii",prices:{cib:18,loose:12,manual:15,sealed:28}},
-{id:16,title:"Mario Kart Wii",platform:"Nintendo Wii",prices:{cib:20,loose:14,manual:17,sealed:30}},
-{id:17,title:"Pokémon Black",platform:"Nintendo DS",prices:{cib:75,loose:60,manual:68,sealed:120}},
-{id:18,title:"Pokémon X",platform:"Nintendo 3DS",prices:{cib:22,loose:16,manual:19,sealed:35}},
-{id:19,title:"The Last of Us Part I",platform:"PlayStation 5",prices:{cib:22,loose:16,manual:19,sealed:34}},
-{id:20,title:"Elden Ring",platform:"Xbox Series X/S",prices:{cib:18,loose:13,manual:15,sealed:28}}
-];
+const games=[];
 const conditionLabels={cib:"CIB (complete in box)",loose:"Loose / game only",manual:"Missing manual",sealed:"Sealed / unopened"};
 let cart=[];
 const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
