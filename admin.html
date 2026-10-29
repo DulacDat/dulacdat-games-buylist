@@ -93,11 +93,28 @@ const $ = id => document.getElementById(id);
 const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('ADD_') && SUPABASE_ANON_KEY.length > 30 && !SUPABASE_ANON_KEY.includes('ADD_');
 let supabase, games = [];
 if (configured) {
-  $('setupNotice').classList.add('hidden'); $('loginPanel').classList.remove('hidden');
+  $('setupNotice').classList.add('hidden');
+  $('loginPanel').classList.remove('hidden');
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  supabase.auth.onAuthStateChange((_event, session) => { if (session) enterApp(session); else showLogin(); });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) await enterApp(session);
+  // Keep auth callbacks lightweight; run app loading after the callback completes.
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      Promise.resolve().then(() => enterApp(session));
+    } else {
+      showLogin();
+    }
+  });
+  // Never await the session lookup at top level: it can prevent button handlers
+  // below from being registered when the auth request stalls.
+  supabase.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      $('loginStatus').textContent = 'Session check failed: ' + error.message;
+    } else if (data && data.session) {
+      return enterApp(data.session);
+    }
+  }).catch(error => {
+    $('loginStatus').textContent = 'Could not check sign-in: ' + error.message;
+  });
 } else {
   $('loginPanel').classList.add('hidden');
 }
